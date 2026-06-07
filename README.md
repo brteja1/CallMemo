@@ -29,15 +29,17 @@ app/src/main/java/com/example/androidcallnotes/
 │   └── CallNoteRepository.kt  Background-safe data access layer
 ├── receiver/
 │   └── CallReceiver.kt        Phone-state broadcast receiver
-└── service/
-    ├── OverlayService.kt      Foreground service that owns the floating window
-    └── OverlayContent.kt      Compose UI rendered inside the overlay
+├── service/
+│   ├── OverlayService.kt      Foreground service that owns the floating window
+│   └── OverlayContent.kt      Compose UI rendered inside the overlay
+└── ui/
+    └── theme/                 Material 3 theme configuration (Color, Type, Theme)
 ```
 
 ## Data Flow
 
 ```text
-Phone state change
+Phone state change (Inbound/Outbound)
     -> CallReceiver
     -> OverlayService (foreground launch)
     -> OverlayContent (shows phone number and note editor)
@@ -47,10 +49,10 @@ Phone state change
 
 ## What The App Uses
 
-- `BroadcastReceiver` for `TelephonyManager.ACTION_PHONE_STATE_CHANGED`
+- `BroadcastReceiver` for `TelephonyManager.ACTION_PHONE_STATE_CHANGED` and `Intent.ACTION_NEW_OUTGOING_CALL`
 - Foreground `OverlayService` for the floating note UI
 - Room database for offline persistence
-- Jetpack Compose for the overlay content
+- Jetpack Compose for the overlay content and main UI
 
 ## Implementation Phases
 
@@ -65,8 +67,11 @@ The app does not use any network permissions.
 At runtime, you may need to grant:
 
 - `READ_PHONE_STATE` to detect call state changes
+- `PROCESS_OUTGOING_CALLS` to capture outgoing numbers when available
 - `POST_NOTIFICATIONS` on Android 13+ so the foreground service notification can appear
 - `SYSTEM_ALERT_WINDOW` so the overlay can draw above other apps
+
+The manifest also declares `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_SPECIAL_USE` for the overlay service.
 
 ## How To Test
 
@@ -80,6 +85,7 @@ At runtime, you may need to grant:
 
 - All data stays on-device.
 - The overlay uses keyboard-friendly window flags so text entry works inside the floating service window.
+- The history preview displays up to the 3 most recent notes for the same phone number.
 
 ## Troubleshooting
 

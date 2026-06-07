@@ -32,7 +32,7 @@ Required fields:
 Implement the following operations:
 
 - `insertNote()`
-- `getNotesForNumber(phoneNumber: String)`
+- `getNotesForNumber(phoneNumber: String)` - Returns the latest 3 notes for the number.
 - `deleteNote()`
 
 ### Data Access Rules
@@ -51,6 +51,7 @@ Keep the implementation organized by responsibility:
 - `OverlayService` for the foreground overlay window and Compose host
 - `OverlayContent` for the Compose note UI
 - `data/` for Room entity, DAO, database, and repository classes
+- `ui/theme/` for Material 3 design tokens
 - `CallNotesContract` for shared intent extras and notification constants
 
 ## Data Flow
@@ -86,6 +87,7 @@ Extend the overlay into a compact notepad interface.
 - Perform all Room operations on a background dispatcher such as `Dispatchers.IO`.
 - Do not block the main UI thread.
 - Keep the app fully offline. Do not add any external network permissions.
+- The overlay service hosts Compose directly and sets lifecycle, ViewModel, and saved-state owners manually.
 - Configure the floating window with keyboard-friendly layout flags:
 
 ```kotlin
@@ -93,11 +95,10 @@ flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
         WindowManager.LayoutParams.FLAG_DIM_BEHIND
 ```
 
-- Set a nonzero `dimAmount` so the overlay stands out above the dimmed background.
+- Set a nonzero `dimAmount` (e.g., 0.45f) so the overlay stands out above the dimmed background.
 - Configure `softInputMode` so the keyboard can appear and resize the overlay content.
 
-## Current Implementation Notes
+## Current Status
 
-- The overlay service hosts Compose directly and sets lifecycle, ViewModel, and saved-state owners manually.
-- The history preview currently shows the latest three notes for the selected phone number.
-- The manifest includes `READ_PHONE_STATE`, `POST_NOTIFICATIONS`, `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, and `PROCESS_OUTGOING_CALLS` permissions.
+- The app handles `READ_PHONE_STATE`, `POST_NOTIFICATIONS`, `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, and `PROCESS_OUTGOING_CALLS` permissions.
+- The history preview shows the latest three notes for the selected phone number.

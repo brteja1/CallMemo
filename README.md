@@ -1,101 +1,61 @@
 # CallMemo
 
-An offline Android app that detects when a phone call ends, opens a floating Jetpack Compose overlay, and stores notes locally in Room keyed by the caller's phone number.
+CallMemo is an offline-first Android application designed to help you capture important notes during or immediately after phone calls. It features a floating overlay UI that appears contextually based on phone state changes and stores all data locally on your device.
 
-## Objective
+## Key Features
 
-Capture a note immediately after a call ends, then save it on-device with the phone number that triggered the overlay.
-
-## Open In Android Studio
-
-1. Launch Android Studio.
-2. Choose `File > Open`.
-3. Select the project root:
-   `/linuxdev/localgit/CallMemo`
-4. Let Gradle sync complete.
-5. If Android Studio asks for a Gradle JDK, use the embedded JDK or JDK 17.
+- **Contextual Overlay**: A floating Jetpack Compose UI appears during incoming/outgoing calls or after they end.
+- **Note Management**: Quickly save notes linked to phone numbers using a local Room database.
+- **Contact Integration**: Automatically displays contact names for known numbers from your device's address book.
+- **Smart History**: View recent notes for the current caller directly within the overlay.
+- **Searchable Archives**: Browse and search through your entire history of call notes by name, number, or content in the main app.
+- **Privacy Focused**: Operates entirely offline with no network permissions required.
 
 ## Project Structure
 
 ```text
 app/src/main/java/com/example/androidcallnotes/
-├── CallNotesApplication.kt    Application container for the Room database and repository
-├── MainActivity.kt            Entry screen for permissions and overlay setup
-├── CallNotesContract.kt       Shared constants for the overlay flow
-├── data/
-│   ├── CallNote.kt            Room entity for saved call notes
-│   ├── CallNoteDao.kt         Room DAO for inserts, queries, and deletes
-│   ├── CallNotesDatabase.kt   Room database bootstrap
-│   └── CallNoteRepository.kt  Background-safe data access layer
-├── receiver/
-│   └── CallReceiver.kt        Phone-state broadcast receiver
-├── service/
-│   ├── OverlayService.kt      Foreground service that owns the floating window
-│   └── OverlayContent.kt      Compose UI rendered inside the overlay
-└── ui/
-    └── theme/                 Material 3 theme configuration (Color, Type, Theme)
+├── MainActivity.kt            Main dashboard for permissions and note history
+├── ContactUtils.kt            Helper for system contact name resolution
+├── data/                      Room database, entities, and repository
+├── receiver/                  BroadcastReceiver for telephony events
+├── service/                   Foreground Service and Overlay UI (Bubble/Content)
+└── ui/theme/                  Material 3 theme definitions
 ```
 
 ## Data Flow
 
-```text
-Phone state change (Inbound/Outbound)
-    -> CallReceiver
-    -> OverlayService (foreground launch)
-    -> OverlayContent (shows phone number and note editor)
-    -> CallNoteRepository
-    -> Room database
-```
+1. **Telephony Event**: `CallReceiver` detects state changes (Ringing, Offhook, Idle).
+2. **Service Launch**: `OverlayService` starts as a foreground service.
+3. **UI Interaction**: User interacts with a compact bubble or expands it to the full `OverlayContent`.
+4. **Persistence**: Notes are saved via `CallNoteRepository` into the local SQLite/Room database.
 
-## What The App Uses
+## Technical Stack
 
-- `BroadcastReceiver` for `TelephonyManager.ACTION_PHONE_STATE_CHANGED` and `Intent.ACTION_NEW_OUTGOING_CALL`
-- Foreground `OverlayService` for the floating note UI
-- Room database for offline persistence
-- Jetpack Compose for the overlay content and main UI
+- **UI**: Jetpack Compose for both the overlay and main application.
+- **Storage**: Room Persistence Library.
+- **Concurreny**: Kotlin Coroutines and Flow.
+- **Service**: Foreground Service with `SYSTEM_ALERT_WINDOW` for the floating UI.
 
-## Implementation Phases
+## Permissions
 
-1. Call detection with a phone-state receiver and explicit foreground service launch.
-2. Local Room storage for notes keyed by phone number.
-3. Overlay UI with a contextual header, text input, save/cancel actions, and recent note preview.
+To function correctly, CallMemo requires the following permissions:
 
-## Required Permissions
+- `READ_PHONE_STATE`: To detect when a call starts or ends.
+- `READ_CALL_LOG`: To reliably identify the phone number for all call types.
+- `READ_CONTACTS`: To show contact names instead of just numbers.
+- `SYSTEM_ALERT_WINDOW`: To display the floating overlay over other apps.
+- `POST_NOTIFICATIONS`: For the required foreground service notification (Android 13+).
 
-The app does not use any network permissions.
+## Getting Started
 
-At runtime, you may need to grant:
+1. Open the project in **Android Studio**.
+2. Build and run the app on a physical device (recommended for telephony features).
+3. Grant the required permissions on the first launch.
+4. Try making a call or receiving one; the CallMemo bubble will appear on your screen.
 
-- `READ_PHONE_STATE` to detect call state changes
-- `PROCESS_OUTGOING_CALLS` to capture outgoing numbers when available
-- `POST_NOTIFICATIONS` on Android 13+ so the foreground service notification can appear
-- `SYSTEM_ALERT_WINDOW` so the overlay can draw above other apps
+## Development
 
-The manifest also declares `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_SPECIAL_USE` for the overlay service.
-
-## How To Test
-
-1. Install and run the app on a device or emulator that supports phone-state broadcasts.
-2. Grant the permissions requested by the app.
-3. Make or simulate a call ending.
-4. The overlay should appear with the captured phone number in the header.
-5. Enter a note and tap `Save` to store it in the local Room database.
-
-## Notes
-
-- All data stays on-device.
-- The overlay uses keyboard-friendly window flags so text entry works inside the floating service window.
-- The history preview displays up to the 3 most recent notes for the same phone number.
-
-## Troubleshooting
-
-- If Gradle sync fails, make sure Android Studio is using a recent embedded JDK or JDK 17.
-- If the overlay does not appear, confirm `SYSTEM_ALERT_WINDOW` is enabled in system settings.
-- If call-state events do not arrive, verify `READ_PHONE_STATE` is granted and the app is installed on a device that supports telephony broadcasts.
-- If the foreground service notification does not show on Android 13+, grant `POST_NOTIFICATIONS`.
-
-## Emulator Or Device
-
-- A physical phone is the most reliable way to test call-state handling and overlay behavior.
-- Some emulators do not emit real phone-state broadcasts, so the overlay flow may not trigger there.
-- If you test on an emulator, you may need to simulate call-state changes manually or use an image/system image that supports telephony.
+- **Build**: `./gradlew assembleDebug`
+- **Clean**: `./gradlew clean`
+- **Check**: Documentation and requirements are maintained in `AGENTS.md` and `REQUIREMENTS.md`.

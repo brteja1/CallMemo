@@ -21,6 +21,9 @@ interface CallNoteDao {
     )
     fun getNotesForNumber(phoneNumber: String): Flow<List<CallNote>>
 
+    @Query("SELECT * FROM call_notes ORDER BY timestamp DESC")
+    fun getAllNotes(): Flow<List<CallNote>>
+
     @Delete
     suspend fun deleteNote(note: CallNote)
 }

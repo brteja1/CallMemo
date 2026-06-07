@@ -9,11 +9,13 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
@@ -35,15 +37,29 @@ import com.example.androidcallnotes.CallNotesContract
 import com.example.androidcallnotes.ContactUtils
 import com.example.androidcallnotes.MainActivity
 import com.example.androidcallnotes.data.CallNote
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class OverlayService : LifecycleService(), SavedStateRegistryOwner {
+    companion object {
+        private const val TAG = "OverlayService"
+
+        fun createIntent(context: Context, phoneNumber: String): Intent {
+            return Intent(context, OverlayService::class.java).apply {
+                putExtra(CallNotesContract.EXTRA_PHONE_NUMBER, phoneNumber)
+            }
+        }
+    }
+
     private val windowManager by lazy { getSystemService<WindowManager>() ?: error("WindowManager unavailable") }
     private val repository by lazy { (application as CallNotesApplication).repository }
 
     private var overlayView: FrameLayout? = null
-    private var currentPhoneNumber: String = CallNotesContract.UNKNOWN_PHONE_NUMBER
+    private var currentPhoneNumber by mutableStateOf(CallNotesContract.UNKNOWN_PHONE_NUMBER)
     private var isExpanded by mutableStateOf(false)
+    private var isCallActive by mutableStateOf(true)
+    private var autoDismissJob: Job? = null
 
     private val viewModelStore = ViewModelStore()
     private val viewModelStoreOwner = object : ViewModelStoreOwner {
@@ -65,15 +81,42 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             ?.takeIf { it.isNotBlank() }
             ?: CallNotesContract.UNKNOWN_PHONE_NUMBER
 
+        val callEnded = intent?.getBooleanExtra(CallNotesContract.EXTRA_CALL_ENDED, false) ?: false
+
+        Log.d(TAG, "onStartCommand: phoneNumber=$newPhoneNumber, callEnded=$callEnded")
+
         if (newPhoneNumber != currentPhoneNumber) {
             currentPhoneNumber = newPhoneNumber
             isExpanded = false
+            autoDismissJob?.cancel()
             updateWindowParams()
+        }
+
+        if (callEnded) {
+            isCallActive = false
+        } else {
+            isCallActive = true
+        }
+
+        if (callEnded && !isExpanded) {
+            startAutoDismissTimer()
         }
 
         startForeground(CallNotesContract.NOTIFICATION_ID, buildNotification())
         showOverlay()
         return START_NOT_STICKY
+    }
+
+    private fun startAutoDismissTimer() {
+        Log.d(TAG, "startAutoDismissTimer: starting 5s delay")
+        autoDismissJob?.cancel()
+        autoDismissJob = lifecycleScope.launch {
+            delay(5000)
+            Log.d(TAG, "autoDismissTimer triggered: isExpanded=$isExpanded")
+            if (!isExpanded) {
+                stopSelf()
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -98,9 +141,14 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         val composeView = ComposeView(this).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
-                val notesState by repository.getNotesForNumber(currentPhoneNumber)
-                    .collectAsState(initial = emptyList())
-                val contactName = ContactUtils.getContactName(context, currentPhoneNumber)
+                val phoneNumber = currentPhoneNumber
+                val notesState by remember(phoneNumber) {
+                    repository.getNotesForNumber(phoneNumber)
+                }.collectAsState(initial = emptyList())
+                
+                val contactName = remember(phoneNumber) {
+                    ContactUtils.getContactName(context, phoneNumber)
+                }
 
                 if (isExpanded) {
                     OverlayContent(
@@ -116,13 +164,21 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                                         noteText = noteText,
                                     )
                                 )
-                                isExpanded = false
-                                updateWindowParams()
+                                if (!isCallActive) {
+                                    stopSelf()
+                                } else {
+                                    isExpanded = false
+                                    updateWindowParams()
+                                }
                             }
                         },
                         onDismiss = {
-                            isExpanded = false
-                            updateWindowParams()
+                            if (!isCallActive) {
+                                stopSelf()
+                            } else {
+                                isExpanded = false
+                                updateWindowParams()
+                            }
                         },
                         onShowAllNotes = {
                             val intent = Intent(this@OverlayService, MainActivity::class.java).apply {
@@ -136,6 +192,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                 } else {
                     BubbleContent(
                         onClick = {
+                            autoDismissJob?.cancel()
                             isExpanded = true
                             updateWindowParams()
                         }
@@ -243,11 +300,4 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         }
     }
 
-    companion object {
-        fun createIntent(context: Context, phoneNumber: String): Intent {
-            return Intent(context, OverlayService::class.java).apply {
-                putExtra(CallNotesContract.EXTRA_PHONE_NUMBER, phoneNumber)
-            }
-        }
-    }
 }

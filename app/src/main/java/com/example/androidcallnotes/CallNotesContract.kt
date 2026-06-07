@@ -2,6 +2,7 @@ package com.example.androidcallnotes
 
 object CallNotesContract {
     const val EXTRA_PHONE_NUMBER = "com.example.androidcallnotes.extra.PHONE_NUMBER"
+    const val EXTRA_CALL_ENDED = "com.example.androidcallnotes.extra.CALL_ENDED"
 
     const val PREFS_NAME = "call_notes_prefs"
     const val PREF_LAST_STATE = "pref_last_state"

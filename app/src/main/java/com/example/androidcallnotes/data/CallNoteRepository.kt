@@ -11,6 +11,10 @@ class CallNoteRepository(
         return dao.getNotesForNumber(phoneNumber)
     }
 
+    fun getAllNotes(): Flow<List<CallNote>> {
+        return dao.getAllNotes()
+    }
+
     suspend fun insertNote(note: CallNote) = withContext(Dispatchers.IO) {
         dao.insertNote(note)
     }

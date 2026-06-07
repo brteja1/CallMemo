@@ -120,6 +120,11 @@ private fun MainScreen(
                     status = if (permissions.hasPhoneState) stringResource(R.string.permission_ready) else stringResource(R.string.permission_missing),
                 )
                 PermissionRow(
+                    title = "Contacts",
+                    description = "Needed to show contact names in the overlay.",
+                    status = if (permissions.hasContacts) stringResource(R.string.permission_ready) else stringResource(R.string.permission_missing),
+                )
+                PermissionRow(
                     title = stringResource(R.string.notification_permission_title),
                     description = stringResource(R.string.notification_permission_desc),
                     status = if (permissions.notificationStatus) stringResource(R.string.permission_ready) else stringResource(R.string.permission_missing),
@@ -136,6 +141,7 @@ private fun MainScreen(
             Button(onClick = {
                 val permissionsToRequest = buildList {
                     add(Manifest.permission.READ_PHONE_STATE)
+                    add(Manifest.permission.READ_CONTACTS)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         add(Manifest.permission.POST_NOTIFICATIONS)
                     }
@@ -179,6 +185,7 @@ private fun PermissionRow(
 
 private data class PermissionStatus(
     val hasPhoneState: Boolean,
+    val hasContacts: Boolean,
     val notificationStatus: Boolean,
     val canDrawOverlays: Boolean,
 ) {
@@ -187,6 +194,10 @@ private data class PermissionStatus(
             val hasPhoneState = ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.READ_PHONE_STATE
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val hasContacts = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_CONTACTS
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
             val notificationStatus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 ContextCompat.checkSelfPermission(
@@ -199,6 +210,7 @@ private data class PermissionStatus(
             val canDrawOverlays = Settings.canDrawOverlays(context)
             return PermissionStatus(
                 hasPhoneState = hasPhoneState,
+                hasContacts = hasContacts,
                 notificationStatus = notificationStatus,
                 canDrawOverlays = canDrawOverlays,
             )

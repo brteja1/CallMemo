@@ -13,36 +13,63 @@ import android.view.Gravity
 import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.androidcallnotes.CallNotesApplication
 import com.example.androidcallnotes.CallNotesContract
+import com.example.androidcallnotes.ContactUtils
 import com.example.androidcallnotes.MainActivity
 import com.example.androidcallnotes.data.CallNote
 import kotlinx.coroutines.launch
 
-class OverlayService : LifecycleService() {
+class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private val windowManager by lazy { getSystemService<WindowManager>() ?: error("WindowManager unavailable") }
     private val repository by lazy { (application as CallNotesApplication).repository }
 
     private var overlayView: FrameLayout? = null
     private var currentPhoneNumber: String = CallNotesContract.UNKNOWN_PHONE_NUMBER
+    private var isExpanded by mutableStateOf(false)
+
+    private val viewModelStore = ViewModelStore()
+    private val viewModelStoreOwner = object : ViewModelStoreOwner {
+        override val viewModelStore: ViewModelStore = this@OverlayService.viewModelStore
+    }
+
+    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+    override val savedStateRegistry: SavedStateRegistry = savedStateRegistryController.savedStateRegistry
 
     override fun onCreate() {
         super.onCreate()
+        savedStateRegistryController.performRestore(null)
         ensureNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        currentPhoneNumber = intent?.getStringExtra(CallNotesContract.EXTRA_PHONE_NUMBER)
+        val newPhoneNumber = intent?.getStringExtra(CallNotesContract.EXTRA_PHONE_NUMBER)
             ?.takeIf { it.isNotBlank() }
             ?: CallNotesContract.UNKNOWN_PHONE_NUMBER
+
+        if (newPhoneNumber != currentPhoneNumber) {
+            currentPhoneNumber = newPhoneNumber
+            isExpanded = false
+            updateWindowParams()
+        }
 
         startForeground(CallNotesContract.NOTIFICATION_ID, buildNotification())
         showOverlay()
@@ -64,61 +91,108 @@ class OverlayService : LifecycleService() {
         }
 
         val container = FrameLayout(this)
+        container.setViewTreeLifecycleOwner(this)
+        container.setViewTreeViewModelStoreOwner(viewModelStoreOwner)
+        container.setViewTreeSavedStateRegistryOwner(this)
+
         val composeView = ComposeView(this).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
                 val notesState by repository.getNotesForNumber(currentPhoneNumber)
                     .collectAsState(initial = emptyList())
+                val contactName = ContactUtils.getContactName(context, currentPhoneNumber)
 
-                OverlayContent(
-                    phoneNumber = currentPhoneNumber,
-                    recentNotes = notesState,
-                    onSave = { noteText ->
-                        lifecycleScope.launch {
-                            repository.insertNote(
-                                CallNote(
-                                    phoneNumber = currentPhoneNumber,
-                                    timestamp = System.currentTimeMillis(),
-                                    noteText = noteText,
+                if (isExpanded) {
+                    OverlayContent(
+                        phoneNumber = currentPhoneNumber,
+                        contactName = contactName,
+                        recentNotes = notesState,
+                        onSave = { noteText ->
+                            lifecycleScope.launch {
+                                repository.insertNote(
+                                    CallNote(
+                                        phoneNumber = currentPhoneNumber,
+                                        timestamp = System.currentTimeMillis(),
+                                        noteText = noteText,
+                                    )
                                 )
-                            )
+                                isExpanded = false
+                                updateWindowParams()
+                            }
+                        },
+                        onDismiss = {
+                            isExpanded = false
+                            updateWindowParams()
+                        },
+                        onShowAllNotes = {
+                            val intent = Intent(this@OverlayService, MainActivity::class.java).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                putExtra(CallNotesContract.EXTRA_PHONE_NUMBER, currentPhoneNumber)
+                            }
+                            startActivity(intent)
                             stopSelf()
                         }
-                    },
-                    onDismiss = {
-                        stopSelf()
-                    },
-                )
+                    )
+                } else {
+                    BubbleContent(
+                        onClick = {
+                            isExpanded = true
+                            updateWindowParams()
+                        }
+                    )
+                }
             }
         }
 
         container.addView(
             composeView,
             FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
             )
         )
 
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
+        val params = getWindowParams()
+
+        windowManager.addView(container, params)
+        overlayView = container
+    }
+
+    private fun updateWindowParams() {
+        overlayView?.let { view ->
+            windowManager.updateViewLayout(view, getWindowParams())
+        }
+    }
+
+    private fun getWindowParams(): WindowManager.LayoutParams {
+        val width = if (isExpanded) WindowManager.LayoutParams.MATCH_PARENT else WindowManager.LayoutParams.WRAP_CONTENT
+        val height = if (isExpanded) WindowManager.LayoutParams.MATCH_PARENT else WindowManager.LayoutParams.WRAP_CONTENT
+        val flags = if (isExpanded) {
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_DIM_BEHIND
+        } else {
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        }
+
+        return WindowManager.LayoutParams(
+            width,
+            height,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             } else {
                 @Suppress("DEPRECATION")
                 WindowManager.LayoutParams.TYPE_PHONE
             },
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_DIM_BEHIND,
+            flags,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.CENTER
+            gravity = if (isExpanded) Gravity.CENTER else Gravity.CENTER_VERTICAL or Gravity.END
+            if (!isExpanded) {
+                x = 16 // Buffer margin from the right edge
+                y = 0
+            }
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
-            dimAmount = 0.45f
+            dimAmount = if (isExpanded) 0.45f else 0f
         }
-
-        windowManager.addView(container, params)
-        overlayView = container
     }
 
     private fun removeOverlay() {

@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,9 +51,11 @@ import java.util.Date
 @Composable
 fun OverlayContent(
     phoneNumber: String,
+    contactName: String?,
     recentNotes: List<CallNote>,
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
+    onShowAllNotes: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -90,6 +93,14 @@ fun OverlayContent(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
+                    if (!contactName.isNullOrBlank()) {
+                        Text(
+                            text = contactName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     Text(
                         text = stringResource(
                             R.string.overlay_phone_number_format,
@@ -132,33 +143,43 @@ fun OverlayContent(
                             }
                         },
                         enabled = noteText.isNotBlank(),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(stringResource(R.string.save_note))
                     }
-                    OutlinedButton(onClick = onDismiss) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Text(stringResource(R.string.dismiss))
                     }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = stringResource(R.string.recent_notes),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-
-                if (recentNotes.isEmpty()) {
+                if (recentNotes.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.recent_notes),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    NoteRow(recentNotes.first())
+                    
+                    TextButton(
+                        onClick = onShowAllNotes,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.show_all_notes),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                } else {
                     Text(
                         text = stringResource(R.string.no_notes_yet),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        recentNotes.forEach { note ->
-                            NoteRow(note)
-                        }
-                    }
                 }
             }
         }

@@ -24,6 +24,7 @@
     <string name="dismiss">Dismiss</string>
     <string name="recent_notes">Recent notes</string>
     <string name="no_notes_yet">No notes saved for this number yet.</string>
+    <string name="show_all_notes">Show all notes</string>
     <string name="foreground_notification_title">CallMemo is ready</string>
     <string name="foreground_notification_text">Floating note overlay is available.</string>
     <string name="foreground_notification_channel_name">CallMemo overlay</string>

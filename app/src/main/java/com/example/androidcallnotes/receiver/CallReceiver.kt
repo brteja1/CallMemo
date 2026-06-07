@@ -32,6 +32,7 @@ class CallReceiver : BroadcastReceiver() {
             TelephonyManager.EXTRA_STATE_RINGING -> {
                 if (number.isNotEmpty()) {
                     editor.putString(CallNotesContract.PREF_LAST_NUMBER, number)
+                    launchOverlay(context, number)
                 }
                 editor.putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_RINGING)
                 editor.apply()
@@ -40,6 +41,13 @@ class CallReceiver : BroadcastReceiver() {
             TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                 if (number.isNotEmpty()) {
                     editor.putString(CallNotesContract.PREF_LAST_NUMBER, number)
+                    launchOverlay(context, number)
+                } else {
+                    // Outgoing calls might not have the number here, but handleOutgoingCall should have caught it
+                    val lastNumber = prefs.getString(CallNotesContract.PREF_LAST_NUMBER, null)
+                    if (lastNumber != null) {
+                        launchOverlay(context, lastNumber)
+                    }
                 }
                 editor.putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_OFFHOOK)
                 editor.apply()

@@ -2,103 +2,77 @@
 
 ## Objective
 
-Build an Android app that detects when a phone call ends, immediately opens a floating Jetpack Compose overlay, and lets the user record a note tied to that caller's phone number. All data must remain local to the device and no network permissions should be added.
+Build an Android app that detects when a phone call starts (incoming or outgoing), displays a floating bubble on the screen, and allows the user to expand it into a Jetpack Compose overlay to record notes tied to the caller's phone number and contact name. All data remains local to the device.
 
-## Phase 1: Call Detection
+## Phase 1: Call Detection & Bubble Display
 
-- Implement a `BroadcastReceiver` that listens for `TelephonyManager.ACTION_PHONE_STATE_CHANGED`.
-- Also handle `Intent.ACTION_NEW_OUTGOING_CALL` so outgoing numbers can be captured when available.
-- Track call-state transitions between `CALL_STATE_RINGING` or `CALL_STATE_OFFHOOK` and `CALL_STATE_IDLE`.
-- Trigger `OverlayService` only when the call transitions to `CALL_STATE_IDLE`, which indicates the call has ended.
-- Capture the incoming or outgoing phone number associated with the call event.
-- For Android 12 and later, launch the overlay through an explicit foreground service from the receiver to comply with broadcast restrictions.
-- The foreground service should remain offline-only and use a local notification channel.
+- Implement a `BroadcastReceiver` (`CallReceiver`) that listens for `TelephonyManager.ACTION_PHONE_STATE_CHANGED` and `Intent.ACTION_NEW_OUTGOING_CALL`.
+- **Trigger**: Launch the `OverlayService` immediately when a call is initiated (`OFFHOOK`) or received (`RINGING`).
+- **Bubble UI**:
+    - Display a small floating bubble during the call.
+    - **Positioning**: The bubble must be centered vertically on the right edge of the screen, with a small buffer margin (e.g., 16px).
+    - **Interaction**: Tapping the bubble expands it into the full Note Overlay.
+- **Service Type**: Use a foreground service with `specialUse` type (for Android 14+ compatibility) and a local notification.
 
-## Phase 2: Local Database
+## Phase 2: Local Database (Room)
 
-Use Room to persist call notes in a lightweight SQLite database.
+Persist call notes locally using Room.
 
 ### Entity: `CallNote`
-
-Required fields:
-
-- `id` - `Int`, primary key, auto-increment
-- `phoneNumber` - `String`, indexed
-- `timestamp` - `Long`
-- `noteText` - `String`
+- `id`: `Int` (Primary Key, Auto-increment)
+- `phoneNumber`: `String` (Indexed)
+- `timestamp`: `Long`
+- `noteText`: `String`
 
 ### DAO Operations
+- `insertNote()`: Save a new note.
+- `getNotesForNumber(phoneNumber: String)`: Retrieve notes for a specific number, ordered by most recent.
+- `deleteNote()`: Remove a note.
 
-Implement the following operations:
+### Technical Implementation
+- Use **KSP** (Kotlin Symbol Processing) for Room annotation processing.
+- Expose data as `Flow<List<CallNote>>`.
+- Ensure all database operations run on `Dispatchers.IO`.
 
-- `insertNote()`
-- `getNotesForNumber(phoneNumber: String)` - Returns the latest 3 notes for the number.
-- `deleteNote()`
+## Phase 3: Note Overlay UI
 
-### Data Access Rules
+The expanded overlay provides the interface for note capture and history review.
 
-- Expose notes as a `Flow<List<CallNote>>` for the overlay history preview.
-- Run inserts and deletes on a background dispatcher such as `Dispatchers.IO`.
-- Do not block the main thread with database work.
+### Features
+- **Contact Integration**: Resolve and display the **Contact Name** from the phone number using `ContactsContract`.
+- **Identity**: Show the **Phone Number** clearly.
+- **Note Capture**: 
+    - A multi-line `OutlinedTextField` for typing the note.
+    - Requests focus automatically when expanded.
+- **Recent History**: 
+    - Display a section showing the **most recent note** captured for this contact/number.
+- **Navigation**:
+    - Provide a "Show all notes" link/button that opens the main application to view the full history for that contact.
+- **Actions**:
+    - `Save Note`: Save the text and collapse the overlay back to a bubble or dismiss.
+    - `Dismiss`: Collapse the overlay or close the service.
 
 ## Project Structure
 
-Keep the implementation organized by responsibility:
+- `receiver/CallReceiver`: Handles telephony broadcasts.
+- `service/OverlayService`: Manages the floating window, View Tree Owners, and state (Bubble vs. Expanded).
+- `service/BubbleContent`: Compose UI for the floating bubble.
+- `service/OverlayContent`: Compose UI for the note-taking card.
+- `data/`: Room entities, DAO, and Repository.
+- `ContactUtils`: Helper for resolving contact names.
+- `MainActivity`: Permission management and full notes history view.
 
-- `CallNotesApplication` for database and repository initialization
-- `MainActivity` for permissions and entry-point UI
-- `CallReceiver` for phone-state broadcasts
-- `OverlayService` for the foreground overlay window and Compose host
-- `OverlayContent` for the Compose note UI
-- `data/` for Room entity, DAO, database, and repository classes
-- `ui/theme/` for Material 3 design tokens
-- `CallNotesContract` for shared intent extras and notification constants
+## Security & Permissions
 
-## Data Flow
+- **Offline-only**: No network permissions allowed.
+- **Required Permissions**:
+    - `READ_PHONE_STATE`: Detect call state.
+    - `READ_CONTACTS`: Resolve phone numbers to names.
+    - `SYSTEM_ALERT_WINDOW`: Draw the floating bubble and overlay.
+    - `POST_NOTIFICATIONS`: Show the mandatory foreground service notification.
+    - `FOREGROUND_SERVICE` & `FOREGROUND_SERVICE_SPECIAL_USE`: Run the overlay in the background.
 
-The implementation should follow this path:
-
-```text
-Phone state change
-    -> CallReceiver
-    -> OverlayService
-    -> OverlayContent
-    -> CallNoteRepository
-    -> Room database
-```
-
-## Phase 3: Overlay UI
-
-Extend the overlay into a compact notepad interface.
-
-### Required UI Behavior
-
-- Display a clear title and show the captured phone number, such as `Number: +1 234-567-890`.
-- Include a focusable `TextField` or `OutlinedTextField` that automatically requests keyboard focus when the overlay appears.
-- Provide a `Save Note` button that writes the note to Room and calls `stopSelf()` to dismiss the overlay.
-- Provide a `Dismiss` button that closes the overlay without saving.
-
-### Optional History Preview
-
-- Show a small scrollable section with the most recent notes saved for the same phone number.
-
-## Technical and Security Requirements
-
-- Perform all Room operations on a background dispatcher such as `Dispatchers.IO`.
-- Do not block the main UI thread.
-- Keep the app fully offline. Do not add any external network permissions.
-- The overlay service hosts Compose directly and sets lifecycle, ViewModel, and saved-state owners manually.
-- Configure the floating window with keyboard-friendly layout flags:
-
-```kotlin
-flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-        WindowManager.LayoutParams.FLAG_DIM_BEHIND
-```
-
-- Set a nonzero `dimAmount` (e.g., 0.45f) so the overlay stands out above the dimmed background.
-- Configure `softInputMode` so the keyboard can appear and resize the overlay content.
-
-## Current Status
-
-- The app handles `READ_PHONE_STATE`, `POST_NOTIFICATIONS`, `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, and `PROCESS_OUTGOING_CALLS` permissions.
-- The history preview shows the latest three notes for the selected phone number.
+## Technical Requirements
+- Use **Jetpack Compose** for all UI components.
+- Manually attach `LifecycleOwner`, `ViewModelStoreOwner`, and `SavedStateRegistryOwner` to the `WindowManager` view to support Compose in a Service.
+- Use `WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE` for the bubble to allow background interaction, and `FLAG_NOT_TOUCH_MODAL` with `FLAG_DIM_BEHIND` for the expanded overlay.

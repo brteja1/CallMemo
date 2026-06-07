@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">CallMemo</string>
+    <string name="main_title">CallMemo</string>
+    <string name="main_subtitle">Save a quick note as soon as a call ends.</string>
+    <string name="phone_permission_title">Phone state</string>
+    <string name="phone_permission_desc">Needed to detect when a call finishes.</string>
+    <string name="notification_permission_title">Notifications</string>
+    <string name="notification_permission_desc">Needed so the foreground service notification can appear.</string>
+    <string name="overlay_permission_title">Display over other apps</string>
+    <string name="overlay_permission_desc">Needed to draw the floating note overlay.</string>
+    <string name="grant_permissions">Grant permissions</string>
+    <string name="open_overlay_settings">Open overlay settings</string>
+    <string name="open_app_settings">Open app settings</string>
+    <string name="permission_ready">Ready</string>
+    <string name="permission_missing">Missing</string>
+    <string name="permission_not_required">Not required on this Android version</string>
+    <string name="permission_overview">Permission overview</string>
+    <string name="overlay_title">Call note</string>
+    <string name="overlay_phone_number_format">Number: %1$s</string>
+    <string name="overlay_unknown_number">Unknown number</string>
+    <string name="overlay_note_label">Note</string>
+    <string name="overlay_note_hint">Type a note for this call...</string>
+    <string name="save_note">Save Note</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="recent_notes">Recent notes</string>
+    <string name="no_notes_yet">No notes saved for this number yet.</string>
+    <string name="foreground_notification_title">CallMemo is ready</string>
+    <string name="foreground_notification_text">Floating note overlay is available.</string>
+    <string name="foreground_notification_channel_name">CallMemo overlay</string>
+    <string name="foreground_notification_channel_desc">Shows the floating note overlay service status.</string>
+    <string name="open_app">Open app</string>
+</resources>
+

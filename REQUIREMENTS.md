@@ -2,7 +2,9 @@
 
 ## Core Features
 - **Phone State Monitoring**: Detect incoming and outgoing calls to trigger the overlay UI.
-- **Overlay UI**: Display a Compose-based floating overlay during or immediately after a call to allow quick note-taking.
+- **Overlay UI**: 
+    - Display a Compose-based floating overlay during or immediately after a call to allow quick note-taking.
+    - Dismiss button on the left and Save button on the right for standard action placement.
 - **Contact Integration**: Automatically retrieve contact names from the system contacts based on the phone number.
 - **Note Management**: Store and retrieve call notes using a local Room database.
 - **Search**: Search through saved notes by contact name, phone number, or note content.

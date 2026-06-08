@@ -186,7 +186,13 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                                 putExtra(CallNotesContract.EXTRA_PHONE_NUMBER, currentPhoneNumber)
                             }
                             startActivity(intent)
-                            stopSelf()
+                            
+                            if (!isCallActive) {
+                                stopSelf()
+                            } else {
+                                isExpanded = false
+                                updateWindowParams()
+                            }
                         }
                     )
                 } else {

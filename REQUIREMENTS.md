@@ -15,6 +15,10 @@
     - For known contacts: Show the contact name as the title with the phone number in a smaller font below it.
     - For unknown contacts: Show the phone number as the main title.
     - Each note item shows the timestamp of the call.
+- **Navigation & Filtering**:
+    - Clicking "Show all notes" in the overlay should navigate to the Main Activity.
+    - The Main Activity should automatically filter the notes list for that specific contact using their phone number as the initial search query.
+    - The overlay bubble must remain visible during an active call, even after navigating to the Main Activity.
 
 ## Technical & Security Requirements
 - **Offline First**: The app must remain entirely offline with no network permissions.

@@ -110,7 +110,11 @@ private fun MainScreen(
     val permissions = PermissionStatus.from(context)
     val allPermissionsGranted = permissions.hasPhoneState && permissions.hasCallLog && permissions.hasContacts && permissions.canDrawOverlays
 
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by remember { 
+        mutableStateOf(
+            (context as? android.app.Activity)?.intent?.getStringExtra(CallNotesContract.EXTRA_PHONE_NUMBER) ?: ""
+        )
+    }
 
     val filteredNotes = remember(allNotes, searchQuery) {
         if (searchQuery.isBlank()) {

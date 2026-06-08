@@ -30,3 +30,7 @@
     - `POST_NOTIFICATIONS`: For the required foreground service notification (Android 13+).
 - **Foreground Service**: Use a Foreground Service to ensure the overlay remains active and reliable during the call lifecycle.
 - **Architecture**: Follow modern Android practices using Jetpack Compose, Room, and Coroutines.
+- **Theming**:
+    - Support both Light and Dark modes based on system settings.
+    - Implement Dynamic Color (Material You) on Android 12+ to align with the phone's wallpaper and system theme.
+    - Ensure consistency between the main application UI and the floating overlay.

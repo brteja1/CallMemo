@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -31,7 +30,7 @@ fun BubbleContent(onClick: () -> Unit) {
         Icon(
             imageVector = Icons.Default.Notes,
             contentDescription = "Open Call Notes",
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.size(28.dp)
         )
     }

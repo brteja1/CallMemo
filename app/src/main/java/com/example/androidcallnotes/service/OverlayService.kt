@@ -37,11 +37,12 @@ import com.example.androidcallnotes.CallNotesContract
 import com.example.androidcallnotes.ContactUtils
 import com.example.androidcallnotes.MainActivity
 import com.example.androidcallnotes.data.CallNote
+import com.example.androidcallnotes.ui.theme.CallMemoTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class OverlayService : LifecycleService(), SavedStateRegistryOwner {
+class OverlayService : LifecycleService(), SavedSt ateRegistryOwner {
     companion object {
         private const val TAG = "OverlayService"
 
@@ -141,29 +142,57 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
         val composeView = ComposeView(this).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
-                val phoneNumber = currentPhoneNumber
-                val notesState by remember(phoneNumber) {
-                    repository.getNotesForNumber(phoneNumber)
-                }.collectAsState(initial = emptyList())
-                
-                val contactName = remember(phoneNumber) {
-                    ContactUtils.getContactName(context, phoneNumber)
-                }
+                CallMemoTheme {
+                    val phoneNumber = currentPhoneNumber
+                    val notesState by remember(phoneNumber) {
+                        repository.getNotesForNumber(phoneNumber)
+                    }.collectAsState(initial = emptyList())
 
-                if (isExpanded) {
-                    OverlayContent(
-                        phoneNumber = currentPhoneNumber,
-                        contactName = contactName,
-                        recentNotes = notesState,
-                        onSave = { noteText ->
-                            lifecycleScope.launch {
-                                repository.insertNote(
-                                    CallNote(
-                                        phoneNumber = currentPhoneNumber,
-                                        timestamp = System.currentTimeMillis(),
-                                        noteText = noteText,
+                    val contactName = remember(phoneNumber) {
+                        ContactUtils.getContactName(context, phoneNumber)
+                    }
+
+                    if (isExpanded) {
+                        OverlayContent(
+                            phoneNumber = currentPhoneNumber,
+                            contactName = contactName,
+                            recentNotes = notesState,
+                            onSave = { noteText ->
+                                lifecycleScope.launch {
+                                    repository.insertNote(
+                                        CallNote(
+                                            phoneNumber = currentPhoneNumber,
+                                            timestamp = System.currentTimeMillis(),
+                                            noteText = noteText,
+                                        )
                                     )
-                                )
+                                    if (!isCallActive) {
+                                        stopSelf()
+                                    } else {
+                                        isExpanded = false
+                                        updateWindowParams()
+                                    }
+                                }
+                            },
+                            onDismiss = {
+                                if (!isCallActive) {
+                                    stopSelf()
+                                } else {
+                                    isExpanded = false
+                                    updateWindowParams()
+                                }
+                            },
+                            onShowAllNotes = {
+                                val intent =
+                                    Intent(this@OverlayService, MainActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        putExtra(
+                                            CallNotesContract.EXTRA_PHONE_NUMBER,
+                                            currentPhoneNumber
+                                        )
+                                    }
+                                startActivity(intent)
+
                                 if (!isCallActive) {
                                     stopSelf()
                                 } else {
@@ -171,38 +200,16 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                                     updateWindowParams()
                                 }
                             }
-                        },
-                        onDismiss = {
-                            if (!isCallActive) {
-                                stopSelf()
-                            } else {
-                                isExpanded = false
+                        )
+                    } else {
+                        BubbleContent(
+                            onClick = {
+                                autoDismissJob?.cancel()
+                                isExpanded = true
                                 updateWindowParams()
                             }
-                        },
-                        onShowAllNotes = {
-                            val intent = Intent(this@OverlayService, MainActivity::class.java).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                putExtra(CallNotesContract.EXTRA_PHONE_NUMBER, currentPhoneNumber)
-                            }
-                            startActivity(intent)
-                            
-                            if (!isCallActive) {
-                                stopSelf()
-                            } else {
-                                isExpanded = false
-                                updateWindowParams()
-                            }
-                        }
-                    )
-                } else {
-                    BubbleContent(
-                        onClick = {
-                            autoDismissJob?.cancel()
-                            isExpanded = true
-                            updateWindowParams()
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

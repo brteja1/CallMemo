@@ -26,6 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -44,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,10 +55,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.androidcallnotes.data.CallNote
 import com.example.androidcallnotes.ui.theme.CallMemoTheme
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -100,14 +104,23 @@ private fun MainScreen(
     val context = LocalContext.current
     val repository = (context.applicationContext as CallNotesApplication).repository
     val allNotes by repository.getAllNotes().collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
 
     var refreshToken by remember { mutableIntStateOf(0) }
+    
+    // Refresh permission status whenever the activity is resumed
+    LifecycleResumeEffect(Unit) {
+        refreshToken++
+        onPauseOrDispose { }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) {
         refreshToken++
     }
-    val permissions = PermissionStatus.from(context)
+    
+    val permissions = remember(refreshToken) { PermissionStatus.from(context) }
     val allPermissionsGranted = permissions.hasPhoneState && permissions.hasCallLog && permissions.hasContacts && permissions.canDrawOverlays
 
     var searchQuery by remember { 
@@ -208,7 +221,14 @@ private fun MainScreen(
                 }
             } else {
                 items(filteredNotes, key = { it.id }) { note ->
-                    NoteItem(note = note)
+                    NoteItem(
+                        note = note,
+                        onDelete = {
+                            scope.launch {
+                                repository.deleteNote(note)
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -272,7 +292,10 @@ private fun PermissionStatusText(label: String, granted: Boolean) {
 }
 
 @Composable
-private fun NoteItem(note: CallNote) {
+private fun NoteItem(
+    note: CallNote,
+    onDelete: () -> Unit
+) {
     val context = LocalContext.current
     val contactName = remember(note.phoneNumber) {
         ContactUtils.getContactName(context, note.phoneNumber)
@@ -305,11 +328,25 @@ private fun NoteItem(note: CallNote) {
                         )
                     }
                 }
-                Text(
-                    text = dateFormatter.format(Date(note.timestamp)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = dateFormatter.format(Date(note.timestamp)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Note",
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
             
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)

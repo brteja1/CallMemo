@@ -28,7 +28,7 @@ fun BubbleContent(onClick: () -> Unit) {
             .padding(8.dp)
             .size(64.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

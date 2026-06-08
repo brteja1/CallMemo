@@ -135,6 +135,12 @@ fun OverlayContent(
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.dismiss))
+                    }
                     Button(
                         onClick = {
                             val trimmed = noteText.trim()
@@ -146,12 +152,6 @@ fun OverlayContent(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(stringResource(R.string.save_note))
-                    }
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.dismiss))
                     }
                 }
 

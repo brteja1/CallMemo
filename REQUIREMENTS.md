@@ -8,23 +8,33 @@
 - **Search**: Search through saved notes by contact name, phone number, or note content.
 
 ## User Interface Requirements
-- **Overlay Bubble**: A compact bubble UI that appears during calls, which can be expanded to a full note-taking interface.
-- **Auto-Dismiss**: The overlay should automatically dismiss after a period of inactivity once a call ends, unless the user is actively editing.
+- **Overlay Bubble**: 
+    - A compact bubble UI that appears during calls.
+    - Includes the text "Call Memo" in a small, bold, and italicized font below the icon.
+    - Has a slight transparency (85% opacity) to be less intrusive.
+    - Can be expanded to a full note-taking interface.
+- **Auto-Dismiss**: The overlay should automatically dismiss after a 5-second period of inactivity once a call ends, unless the user is actively editing.
 - **Main Activity Listing**:
     - Display a list of all saved notes.
     - For known contacts: Show the contact name as the title with the phone number in a smaller font below it.
     - For unknown contacts: Show the phone number as the main title.
-    - Each note item shows the timestamp of the call.
+    - Each note item shows the timestamp of the call and a delete option.
 - **Navigation & Filtering**:
-    - Clicking "Show all notes" in the overlay should navigate to the Main Activity.
-    - The Main Activity should automatically filter the notes list for that specific contact using their phone number as the initial search query.
+    - Clicking "Show all notes" in the overlay navigates to the Main Activity.
+    - The Main Activity automatically filters the notes list for that specific contact using their phone number as the initial search query.
     - The overlay bubble must remain visible during an active call, even after navigating to the Main Activity.
+
+## Branding & Iconography
+- **App Icon**: 
+    - Design: A white notes symbol with black lines and a black phone symbol on top.
+    - Placement: Centered and scaled proportionately to fit completely within the Android circular launcher mask.
+    - Background: Teal theme color.
 
 ## Technical & Security Requirements
 - **Offline First**: The app must remain entirely offline with no network permissions.
 - **Permissions**:
     - `READ_PHONE_STATE`: To detect call state changes.
-    - `READ_CALL_LOG`: To retrieve the phone number for outgoing calls where not immediately available.
+    - `READ_CALL_LOG`: To retrieve the phone number for outgoing calls and identify contacts reliably.
     - `READ_CONTACTS`: To display contact names.
     - `SYSTEM_ALERT_WINDOW`: To display the overlay over other apps.
     - `POST_NOTIFICATIONS`: For the required foreground service notification (Android 13+).

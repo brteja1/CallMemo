@@ -86,11 +86,17 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
         Log.d(TAG, "onStartCommand: phoneNumber=$newPhoneNumber, callEnded=$callEnded")
 
+        val isUnknown = newPhoneNumber == CallNotesContract.UNKNOWN_PHONE_NUMBER
+        val currentIsUnknown = currentPhoneNumber == CallNotesContract.UNKNOWN_PHONE_NUMBER
+
         if (newPhoneNumber != currentPhoneNumber) {
-            currentPhoneNumber = newPhoneNumber
-            isExpanded = false
-            autoDismissJob?.cancel()
-            updateWindowParams()
+            // Only update if the new number is not unknown, or if we currently have an unknown number
+            if (!isUnknown || currentIsUnknown) {
+                currentPhoneNumber = newPhoneNumber
+                isExpanded = false
+                autoDismissJob?.cancel()
+                updateWindowParams()
+            }
         }
 
         if (callEnded) {

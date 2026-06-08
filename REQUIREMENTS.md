@@ -1,7 +1,9 @@
 # CallMemo Requirements
 
 ## Core Features
-- **Phone State Monitoring**: Detect incoming and outgoing calls to trigger the overlay UI.
+- **Phone State Monitoring**: 
+    - Detect incoming and outgoing calls to trigger the overlay UI.
+    - Robust number detection: Use intent extras, shared preferences, and call log fallbacks to ensure the correct number is displayed, especially after a call ends.
 - **Overlay UI**: 
     - Display a Compose-based floating overlay during or immediately after a call to allow quick note-taking.
     - Dismiss button on the left and Save button on the right for standard action placement.

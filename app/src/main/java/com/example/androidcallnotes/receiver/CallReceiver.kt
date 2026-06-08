@@ -53,7 +53,12 @@ class CallReceiver : BroadcastReceiver() {
                 }
                 
                 if (phoneNumber.isEmpty()) {
-                    phoneNumber = getLatestOutgoingCall(context)
+                    phoneNumber = getLatestCallNumber(context)
+                }
+                
+                if (phoneNumber.isNotEmpty()) {
+                    editor.putString(CallNotesContract.PREF_LAST_NUMBER, phoneNumber)
+                    editor.apply()
                 }
 
                 Log.d(TAG, "OFFHOOK: final number=$phoneNumber")
@@ -65,9 +70,14 @@ class CallReceiver : BroadcastReceiver() {
 
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 val previousState = prefs.getInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_IDLE)
-                val phoneNumber = number.ifEmpty {
+                var phoneNumber = number.ifEmpty {
                     prefs.getString(CallNotesContract.PREF_LAST_NUMBER, null).orEmpty()
                 }
+                
+                if (phoneNumber.isEmpty()) {
+                    phoneNumber = getLatestCallNumber(context)
+                }
+
                 Log.d(TAG, "IDLE: previousState=$previousState, phoneNumber=$phoneNumber")
 
                 editor.putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_IDLE)
@@ -111,11 +121,11 @@ class CallReceiver : BroadcastReceiver() {
         ContextCompat.startForegroundService(context, serviceIntent)
     }
 
-    private fun getLatestOutgoingCall(context: Context): String {
+    private fun getLatestCallNumber(context: Context): String {
         if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CALL_LOG)
             != android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w(TAG, "getLatestOutgoingCall: READ_CALL_LOG permission not granted")
+            Log.w(TAG, "getLatestCallNumber: READ_CALL_LOG permission not granted")
             return ""
         }
 
@@ -123,8 +133,8 @@ class CallReceiver : BroadcastReceiver() {
             val cursor = context.contentResolver.query(
                 CallLog.Calls.CONTENT_URI,
                 arrayOf(CallLog.Calls.NUMBER),
-                "${CallLog.Calls.TYPE} = ?",
-                arrayOf(CallLog.Calls.OUTGOING_TYPE.toString()),
+                null,
+                null,
                 "${CallLog.Calls.DATE} DESC LIMIT 1"
             )
             cursor?.use {

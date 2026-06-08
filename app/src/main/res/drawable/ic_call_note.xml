@@ -3,11 +3,28 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- White background for the note with a black border -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M7,4C5.895,4 5,4.895 5,6V18C5,19.105 5.895,20 7,20H17C18.105,20 19,19.105 19,18V9.414C19,8.883 18.789,8.374 18.414,8L15,4.586C14.626,4.211 14.117,4 13.586,4H7ZM7,6H13V9C13,9.552 13.448,10 14,10H17V18H7V6ZM9,12C8.448,12 8,12.448 8,13C8,13.552 8.448,14 9,14H15C15.552,14 16,13.552 16,13C16,12.448 15.552,12 15,12H9ZM9,15C8.448,15 8,15.448 8,16C8,16.552 8.448,17 9,17H13C13.552,17 14,16.552 14,16C14,15.448 13.552,15 13,15H9Z" />
-    <path
-        android:fillColor="#0F766E"
-        android:pathData="M16.62,13.79c0.72,1.42 1.88,2.57 3.3,3.3l1.1,-1.1c0.13,-0.13 0.33,-0.18 0.51,-0.12c0.56,0.18 1.16,0.28 1.78,0.28c0.28,0 0.5,0.22 0.5,0.5v1.71c0,0.28 -0.22,0.5 -0.5,0.5c-4.7,0 -8.5,-3.81 -8.5,-8.5c0,-0.28 0.22,-0.5 0.5,-0.5h1.71c0.28,0 0.5,0.22 0.5,0.5c0,0.62 0.1,1.22 0.28,1.78c0.06,0.18 0.01,0.38 -0.12,0.51l-1.1,1.1z" />
-</vector>
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:pathData="M4,2h10l6,6v14h-16z" />
 
+    <!-- Black lines -->
+    <path
+        android:pathData="M7,10h5M7,13h5M7,16h3"
+        android:strokeWidth="1"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round" />
+
+    <!-- Black phone icon shifted right and up, and scaled down -->
+    <group
+        android:translateX="11"
+        android:translateY="3"
+        android:scaleX="0.55"
+        android:scaleY="0.55">
+        <path
+            android:fillColor="#000000"
+            android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1H7c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
+    </group>
+</vector>

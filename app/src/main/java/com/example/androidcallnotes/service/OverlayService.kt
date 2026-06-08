@@ -42,7 +42,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class OverlayService : LifecycleService(), SavedSt ateRegistryOwner {
+class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     companion object {
         private const val TAG = "OverlayService"
 
@@ -246,12 +246,7 @@ class OverlayService : LifecycleService(), SavedSt ateRegistryOwner {
         return WindowManager.LayoutParams(
             width,
             height,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_PHONE
-            },
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             flags,
             PixelFormat.TRANSLUCENT,
         ).apply {
@@ -273,8 +268,6 @@ class OverlayService : LifecycleService(), SavedSt ateRegistryOwner {
     }
 
     private fun ensureNotificationChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
         val manager = getSystemService<NotificationManager>() ?: return
         val channel = NotificationChannel(
             CallNotesContract.NOTIFICATION_CHANNEL_ID,

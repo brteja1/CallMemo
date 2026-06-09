@@ -16,6 +16,7 @@
     - A compact bubble UI that appears during calls.
     - Includes the text "Call Memo" in a small, bold, and italicized font below the icon.
     - Has a slight transparency (85% opacity) to be less intrusive.
+    - **Lock Screen Support**: Displays over the system lock screen to allow note access during active calls even when the device is locked.
     - Can be expanded to a full note-taking interface.
 - **Auto-Dismiss**: The overlay should automatically dismiss after a 5-second period of inactivity once a call ends, unless the user is actively editing.
 - **Main Activity Listing**:

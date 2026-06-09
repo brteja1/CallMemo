@@ -243,11 +243,16 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private fun getWindowParams(): WindowManager.LayoutParams {
         val width = if (isExpanded) WindowManager.LayoutParams.MATCH_PARENT else WindowManager.LayoutParams.WRAP_CONTENT
         val height = if (isExpanded) WindowManager.LayoutParams.MATCH_PARENT else WindowManager.LayoutParams.WRAP_CONTENT
-        val flags = if (isExpanded) {
+        
+        var flags = if (isExpanded) {
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_DIM_BEHIND
         } else {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
         }
+        
+        // Allow the window to be shown over the lock screen
+        @Suppress("DEPRECATION")
+        flags = flags or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
 
         return WindowManager.LayoutParams(
             width,

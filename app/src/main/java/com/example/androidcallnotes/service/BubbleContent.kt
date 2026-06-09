@@ -35,12 +35,12 @@ fun BubbleContent(onClick: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = Icons.Default.Notes,
-                contentDescription = "Open Call Notes",
+                contentDescription = "Open CallMemo",
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                text = "Call Memo",
+                text = "CallMemo",
                 color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 10.sp,

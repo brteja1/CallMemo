@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
                     MainScreen(
                         onOpenOverlaySettings = ::openOverlaySettings,
                         onOpenAppSettings = ::openAppSettings,
+                        onOpenNotificationSettings = ::openNotificationSettings,
                     )
                 }
             }
@@ -94,12 +95,18 @@ class MainActivity : AppCompatActivity() {
         }
         startActivity(intent)
     }
+
+    private fun openNotificationSettings() {
+        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+        startActivity(intent)
+    }
 }
 
 @Composable
 private fun MainScreen(
     onOpenOverlaySettings: () -> Unit,
     onOpenAppSettings: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val repository = (context.applicationContext as CallNotesApplication).repository
@@ -121,7 +128,7 @@ private fun MainScreen(
     }
     
     val permissions = remember(refreshToken) { PermissionStatus.from(context) }
-    val allPermissionsGranted = permissions.hasPhoneState && permissions.hasCallLog && permissions.hasContacts && permissions.canDrawOverlays
+    val allPermissionsGranted = permissions.hasPhoneState && permissions.hasCallLog && permissions.hasContacts && permissions.canDrawOverlays && permissions.hasNotificationAccess
 
     var searchQuery by remember { 
         mutableStateOf(
@@ -177,7 +184,8 @@ private fun MainScreen(
                         permissionLauncher.launch(permissionsToRequest.toTypedArray())
                     },
                     onOpenOverlaySettings = onOpenOverlaySettings,
-                    onOpenAppSettings = onOpenAppSettings
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenNotificationSettings = onOpenNotificationSettings
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -244,6 +252,7 @@ private fun PermissionsCard(
     onGrantPermissions: () -> Unit,
     onOpenOverlaySettings: () -> Unit,
     onOpenAppSettings: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)),
@@ -265,17 +274,25 @@ private fun PermissionsCard(
                 PermissionStatusText("Call Log", permissions.hasCallLog)
                 PermissionStatusText("Contacts", permissions.hasContacts)
                 PermissionStatusText("Overlay", permissions.canDrawOverlays)
+                PermissionStatusText("Notification Access (for WhatsApp)", permissions.hasNotificationAccess)
             }
 
-            Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onGrantPermissions, modifier = Modifier.weight(1f)) {
-                    Text("Grant", style = MaterialTheme.typography.labelLarge)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onGrantPermissions, modifier = Modifier.weight(1f)) {
+                        Text("Grant", style = MaterialTheme.typography.labelLarge)
+                    }
+                    OutlinedButton(onClick = onOpenOverlaySettings, modifier = Modifier.weight(1f)) {
+                        Text("Overlay", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
-                OutlinedButton(onClick = onOpenOverlaySettings, modifier = Modifier.weight(1f)) {
-                    Text("Overlay", style = MaterialTheme.typography.labelLarge)
-                }
-                OutlinedButton(onClick = onOpenAppSettings, modifier = Modifier.weight(1f)) {
-                    Text("App", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = onOpenNotificationSettings, modifier = Modifier.weight(1f)) {
+                        Text("Notifications", style = MaterialTheme.typography.labelLarge)
+                    }
+                    OutlinedButton(onClick = onOpenAppSettings, modifier = Modifier.weight(1f)) {
+                        Text("App Settings", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
         }
@@ -379,6 +396,7 @@ private data class PermissionStatus(
     val hasContacts: Boolean,
     val notificationStatus: Boolean,
     val canDrawOverlays: Boolean,
+    val hasNotificationAccess: Boolean,
 ) {
     companion object {
         fun from(context: android.content.Context): PermissionStatus {
@@ -403,12 +421,17 @@ private data class PermissionStatus(
                 NotificationManagerCompat.from(context).areNotificationsEnabled()
             }
             val canDrawOverlays = Settings.canDrawOverlays(context)
+            
+            val hasNotificationAccess = NotificationManagerCompat.getEnabledListenerPackages(context)
+                .contains(context.packageName)
+
             return PermissionStatus(
                 hasPhoneState = hasPhoneState,
                 hasCallLog = hasCallLog,
                 hasContacts = hasContacts,
                 notificationStatus = notificationStatus,
                 canDrawOverlays = canDrawOverlays,
+                hasNotificationAccess = hasNotificationAccess,
             )
         }
     }

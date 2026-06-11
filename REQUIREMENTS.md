@@ -2,8 +2,9 @@
 
 ## Core Features
 - **Phone State Monitoring**: 
-    - Detect incoming and outgoing calls to trigger the overlay UI.
-    - Robust number detection: Use intent extras, shared preferences, and call log fallbacks to ensure the correct number is displayed, especially after a call ends.
+    - Detect incoming and outgoing cellular calls to trigger the overlay UI.
+    - **VoIP Support**: Detect WhatsApp and WhatsApp Business calls using a `NotificationListenerService`.
+    - Robust number/contact detection: Use intent extras, shared preferences, call log fallbacks, and notification extras to ensure the correct identifier is displayed.
 - **Overlay UI**: 
     - Display a Compose-based floating overlay during or immediately after a call to allow quick note-taking.
     - Dismiss button on the left and Save button on the right for standard action placement.
@@ -41,6 +42,7 @@
     - `READ_PHONE_STATE`: To detect call state changes.
     - `READ_CALL_LOG`: To retrieve the phone number for outgoing calls and identify contacts reliably.
     - `READ_CONTACTS`: To display contact names.
+    - `BIND_NOTIFICATION_LISTENER_SERVICE`: To detect VoIP calls (WhatsApp) from system notifications.
     - `SYSTEM_ALERT_WINDOW`: To display the overlay over other apps.
     - `POST_NOTIFICATIONS`: For the required foreground service notification (Android 13+).
 - **Foreground Service**: Use a Foreground Service to ensure the overlay remains active and reliable during the call lifecycle.

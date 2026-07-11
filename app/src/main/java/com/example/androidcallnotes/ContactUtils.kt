@@ -6,11 +6,11 @@ import android.provider.ContactsContract
 
 object ContactUtils {
     fun getContactName(context: Context, phoneNumber: String?): String? {
-        if (phoneNumber == null || phoneNumber.isBlank()) return null
+        if (phoneNumber.isNullOrBlank()) return null
         
         val uri = Uri.withAppendedPath(
             ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-            Uri.encode(phoneNumber)
+            Uri.encode(phoneNumber),
         )
         
         val projection = arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME)
@@ -23,7 +23,7 @@ object ContactUtils {
                     null
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

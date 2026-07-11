@@ -7,6 +7,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import com.example.androidcallnotes.CallNotesContract
 
 class CallNotificationListener : NotificationListenerService() {
@@ -36,8 +37,8 @@ class CallNotificationListener : NotificationListenerService() {
             Log.d(TAG, "VoIP Call Detected: $contactName from ${sbn.packageName}")
             
             // Save as last number for fallback
-            val prefs = getSharedPreferences(CallNotesContract.PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().putString(CallNotesContract.PREF_LAST_NUMBER, contactName).apply()
+            val prefs = getSharedPreferences(CallNotesContract.PREFS_NAME, MODE_PRIVATE)
+            prefs.edit { putString(CallNotesContract.PREF_LAST_NUMBER, contactName) }
 
             val serviceIntent = OverlayService.createIntent(this, contactName)
             ContextCompat.startForegroundService(this, serviceIntent)
@@ -55,7 +56,7 @@ class CallNotificationListener : NotificationListenerService() {
                 ?.replace("Incoming call", "")
                 ?.replace("Ongoing call", "")
                 ?.trim()
-                ?: getSharedPreferences(CallNotesContract.PREFS_NAME, Context.MODE_PRIVATE)
+                ?: getSharedPreferences(CallNotesContract.PREFS_NAME, MODE_PRIVATE)
                     .getString(CallNotesContract.PREF_LAST_NUMBER, null)
                 ?: return
 

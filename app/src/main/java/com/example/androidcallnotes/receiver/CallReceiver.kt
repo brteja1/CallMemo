@@ -7,6 +7,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import android.provider.CallLog
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import com.example.androidcallnotes.CallNotesContract
 import com.example.androidcallnotes.service.OverlayService
 
@@ -34,16 +35,20 @@ class CallReceiver : BroadcastReceiver() {
         val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
         val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)?.trim().orEmpty()
         Log.d(TAG, "handlePhoneStateChanged: state=$state, number=$number")
-        val editor = prefs.edit()
 
         when (state) {
             TelephonyManager.EXTRA_STATE_RINGING -> {
                 if (number.isNotEmpty()) {
-                    editor.putString(CallNotesContract.PREF_LAST_NUMBER, number)
+                    prefs.edit {
+                        putString(CallNotesContract.PREF_LAST_NUMBER, number)
+                        putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_RINGING)
+                    }
                     launchOverlay(context, number)
+                } else {
+                    prefs.edit {
+                        putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_RINGING)
+                    }
                 }
-                editor.putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_RINGING)
-                editor.apply()
             }
 
             TelephonyManager.EXTRA_STATE_OFFHOOK -> {
@@ -57,15 +62,18 @@ class CallReceiver : BroadcastReceiver() {
                 }
                 
                 if (phoneNumber.isNotEmpty()) {
-                    editor.putString(CallNotesContract.PREF_LAST_NUMBER, phoneNumber)
-                    editor.apply()
+                    prefs.edit {
+                        putString(CallNotesContract.PREF_LAST_NUMBER, phoneNumber)
+                        putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_OFFHOOK)
+                    }
+                } else {
+                    prefs.edit {
+                        putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_OFFHOOK)
+                    }
                 }
 
                 Log.d(TAG, "OFFHOOK: final number=$phoneNumber")
                 launchOverlay(context, phoneNumber)
-                
-                editor.putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_OFFHOOK)
-                editor.apply()
             }
 
             TelephonyManager.EXTRA_STATE_IDLE -> {
@@ -80,12 +88,13 @@ class CallReceiver : BroadcastReceiver() {
 
                 Log.d(TAG, "IDLE: previousState=$previousState, phoneNumber=$phoneNumber")
 
-                editor.putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_IDLE)
-                editor.remove(CallNotesContract.PREF_LAST_NUMBER)
-                editor.apply()
+                prefs.edit {
+                    putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_IDLE)
+                    remove(CallNotesContract.PREF_LAST_NUMBER)
+                }
 
-                if (previousState == TelephonyManager.CALL_STATE_RINGING ||
-                    previousState == TelephonyManager.CALL_STATE_OFFHOOK
+                if ((previousState == TelephonyManager.CALL_STATE_RINGING) ||
+                    (previousState == TelephonyManager.CALL_STATE_OFFHOOK)
                 ) {
                     val serviceIntent = OverlayService.createIntent(context, phoneNumber).apply {
                         putExtra(CallNotesContract.EXTRA_CALL_ENDED, true)
@@ -104,10 +113,10 @@ class CallReceiver : BroadcastReceiver() {
         val number = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER)?.trim().orEmpty()
         Log.d(TAG, "handleOutgoingCall: number=$number")
         if (number.isNotEmpty()) {
-            prefs.edit()
-                .putString(CallNotesContract.PREF_LAST_NUMBER, number)
-                .putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_OFFHOOK)
-                .apply()
+            prefs.edit {
+                putString(CallNotesContract.PREF_LAST_NUMBER, number)
+                putInt(CallNotesContract.PREF_LAST_STATE, TelephonyManager.CALL_STATE_OFFHOOK)
+            }
             launchOverlay(context, number)
         }
     }

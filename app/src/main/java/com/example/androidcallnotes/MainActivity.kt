@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -215,7 +214,7 @@ private fun MainScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (filteredNotes.isEmpty()) {
                 item {
@@ -374,19 +373,6 @@ private fun NoteItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
-    }
-}
-
-@Composable
-private fun PermissionRow(
-    title: String,
-    description: String,
-    status: String,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-        Text(text = description, style = MaterialTheme.typography.bodySmall)
-        Text(text = status, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
     }
 }
 

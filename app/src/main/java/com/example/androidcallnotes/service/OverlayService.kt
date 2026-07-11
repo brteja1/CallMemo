@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -58,8 +57,8 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
 
     private var overlayView: FrameLayout? = null
     private var currentPhoneNumber by mutableStateOf(CallNotesContract.UNKNOWN_PHONE_NUMBER)
-    private var isExpanded by mutableStateOf(false)
-    private var isCallActive by mutableStateOf(true)
+    private var isExpanded by mutableStateOf(value = false)
+    private var isCallActive by mutableStateOf(value = true)
     private var autoDismissJob: Job? = null
 
     private val viewModelStore = ViewModelStore()
@@ -99,11 +98,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             }
         }
 
-        if (callEnded) {
-            isCallActive = false
-        } else {
-            isCallActive = true
-        }
+        isCallActive = !callEnded
 
         if (callEnded && !isExpanded) {
             startAutoDismissTimer()
@@ -310,11 +305,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     }
 
     private fun pendingIntentFlags(): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.FLAG_IMMUTABLE
-        } else {
-            0
-        }
+        return PendingIntent.FLAG_IMMUTABLE
     }
 
 }

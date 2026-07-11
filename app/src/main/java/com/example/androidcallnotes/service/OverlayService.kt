@@ -58,6 +58,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private var overlayView: FrameLayout? = null
     private var currentPhoneNumber by mutableStateOf(CallNotesContract.UNKNOWN_PHONE_NUMBER)
     private var isExpanded by mutableStateOf(value = false)
+    private var isMinimized by mutableStateOf(value = false)
     private var isCallActive by mutableStateOf(value = true)
     private var autoDismissJob: Job? = null
 
@@ -204,9 +205,18 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                         )
                     } else {
                         SidebarContent(
+                            isMinimized = isMinimized,
                             onClick = {
-                                autoDismissJob?.cancel()
-                                isExpanded = true
+                                if (isMinimized) {
+                                    isMinimized = false
+                                } else {
+                                    autoDismissJob?.cancel()
+                                    isExpanded = true
+                                }
+                                updateWindowParams()
+                            },
+                            onMinimize = {
+                                isMinimized = true
                                 updateWindowParams()
                             }
                         )

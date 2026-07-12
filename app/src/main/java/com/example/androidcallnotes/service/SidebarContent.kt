@@ -49,7 +49,7 @@ fun SidebarContent(
     Box(
         modifier = Modifier
             .width(if (isMinimized) 12.dp else 64.dp)
-            .height(if (isMinimized) 100.dp else 70.dp)
+            .height(70.dp)
             .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
             .background(glossyGradient)
             .border(

@@ -17,7 +17,7 @@
     - A glossy vertical sidebar handle (64dp x 70dp) anchored flush to the right edge.
     - Includes the text "CallMemo" in a small, bold, and italicized font below the icon.
     - Has a slight transparency (85% opacity) to be less intrusive.
-    - **Minimize Gesture**: Users can swipe right on the sidebar to minimize it to a tiny 12dp wide handle. Clicking the handle restores the sidebar.
+    - **Minimize Gesture**: Users can swipe right on the sidebar to minimize it to a tiny 12dp wide handle of the same height. Clicking the handle restores the sidebar.
     - **Lock Screen Support**: Displays over the system lock screen to allow note access during active calls even when the device is locked.
     - Can be expanded to a full note-taking interface.
 - **Auto-Dismiss**: The overlay should automatically dismiss after a 5-second period of inactivity once a call ends, unless the user is actively editing.

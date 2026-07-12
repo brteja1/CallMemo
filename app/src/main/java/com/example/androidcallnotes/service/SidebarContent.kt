@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,63 +50,70 @@ fun SidebarContent(
 
     Box(
         modifier = Modifier
-            .width(if (isMinimized) 12.dp else 64.dp)
+            .width(if (isMinimized) 24.dp else 64.dp) // Increased touch area for minimized state
             .height(70.dp)
-            .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
-            .background(glossyGradient)
-            .border(
-                BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f)),
-                RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
-            )
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { change, dragAmount ->
                     change.consume()
-                    if (dragAmount > 20f && !isMinimized) {
+                    if (dragAmount > 10f && !isMinimized) { // More sensitive minimize
                         onMinimize()
-                    } else if (dragAmount < -20f && isMinimized) {
+                    } else if (dragAmount < -10f && isMinimized) { // More sensitive maximize
                         onMaximize()
                     }
                 }
             }
             .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.CenterEnd
     ) {
-        if (!isMinimized) {
-            // Shine effect overlay (top half)
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        Brush.verticalGradient(
-                            0.0f to Color.White.copy(alpha = 0.25f),
-                            0.5f to Color.Transparent
+        Box(
+            modifier = Modifier
+                .width(if (isMinimized) 12.dp else 64.dp)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
+                .background(glossyGradient)
+                .border(
+                    BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f)),
+                    RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (!isMinimized) {
+                // Shine effect overlay (top half)
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to Color.White.copy(alpha = 0.25f),
+                                0.5f to Color.Transparent
+                            )
                         )
-                    )
-            )
+                )
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notes,
-                    contentDescription = "Open CallMemo",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(28.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = "CallMemo",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontStyle = FontStyle.Italic
-                    ),
-                    maxLines = 1
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Notes,
+                        contentDescription = "Open CallMemo",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Text(
+                        text = "CallMemo",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontStyle = FontStyle.Italic
+                        ),
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

@@ -34,7 +34,8 @@ import androidx.compose.ui.unit.sp
 fun SidebarContent(
     isMinimized: Boolean,
     onClick: () -> Unit,
-    onMinimize: () -> Unit
+    onMinimize: () -> Unit,
+    onMaximize: () -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     
@@ -61,6 +62,8 @@ fun SidebarContent(
                     change.consume()
                     if (dragAmount > 20f && !isMinimized) {
                         onMinimize()
+                    } else if (dragAmount < -20f && isMinimized) {
+                        onMaximize()
                     }
                 }
             }

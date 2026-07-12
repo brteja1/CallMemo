@@ -218,6 +218,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                             onMinimize = {
                                 isMinimized = true
                                 updateWindowParams()
+                            },
+                            onMaximize = {
+                                isMinimized = false
+                                updateWindowParams()
                             }
                         )
                     }

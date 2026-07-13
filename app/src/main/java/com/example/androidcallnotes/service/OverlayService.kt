@@ -273,7 +273,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             gravity = if (isExpanded) Gravity.CENTER else Gravity.CENTER_VERTICAL or Gravity.END
             if (!isExpanded) {
                 x = 0 // Anchored flush to the right edge
-                y = 0
+                y = -100 // Moved slightly upwards from the center
             }
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
             dimAmount = if (isExpanded) 0.45f else 0f

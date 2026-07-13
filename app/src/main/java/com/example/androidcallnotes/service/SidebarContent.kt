@@ -50,7 +50,7 @@ fun SidebarContent(
 
     Box(
         modifier = Modifier
-            .width(if (isMinimized) 24.dp else 64.dp) // Increased touch area for minimized state
+            .width(if (isMinimized) 48.dp else 64.dp) // Significantly increased touch area (standard touch target size)
             .height(70.dp)
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { change, dragAmount ->

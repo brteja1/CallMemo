@@ -60,6 +60,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
     private var isExpanded by mutableStateOf(value = false)
     private var isMinimized by mutableStateOf(value = false)
     private var isCallActive by mutableStateOf(value = true)
+    private var sidebarOffsetY by mutableStateOf(-100f)
     private var autoDismissJob: Job? = null
 
     private val viewModelStore = ViewModelStore()
@@ -222,6 +223,10 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
                             onMaximize = {
                                 isMinimized = false
                                 updateWindowParams()
+                            },
+                            onVerticalDrag = { deltaY ->
+                                sidebarOffsetY += deltaY
+                                updateWindowParams()
                             }
                         )
                     }
@@ -273,7 +278,7 @@ class OverlayService : LifecycleService(), SavedStateRegistryOwner {
             gravity = if (isExpanded) Gravity.CENTER else Gravity.CENTER_VERTICAL or Gravity.END
             if (!isExpanded) {
                 x = 0 // Anchored flush to the right edge
-                y = -100 // Moved slightly upwards from the center
+                y = sidebarOffsetY.toInt()
             }
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
             dimAmount = if (isExpanded) 0.45f else 0f

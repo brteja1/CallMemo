@@ -4,7 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -36,7 +36,8 @@ fun SidebarContent(
     isMinimized: Boolean,
     onClick: () -> Unit,
     onMinimize: () -> Unit,
-    onMaximize: () -> Unit
+    onMaximize: () -> Unit,
+    onVerticalDrag: (Float) -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     
@@ -53,14 +54,18 @@ fun SidebarContent(
             .width(if (isMinimized) 48.dp else 64.dp) // Significantly increased touch area (standard touch target size)
             .height(70.dp)
             .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    change.consume()
-                    if (dragAmount > 10f && !isMinimized) { // More sensitive minimize
-                        onMinimize()
-                    } else if (dragAmount < -10f && isMinimized) { // More sensitive maximize
-                        onMaximize()
+                detectDragGestures(
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        onVerticalDrag(dragAmount.y)
+                        
+                        if (dragAmount.x > 10f && !isMinimized) { // More sensitive minimize
+                            onMinimize()
+                        } else if (dragAmount.x < -10f && isMinimized) { // More sensitive maximize
+                            onMaximize()
+                        }
                     }
-                }
+                )
             }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.CenterEnd
